@@ -1,18 +1,32 @@
-import Fastify from 'fastify'
+import { GraphQLObjectType, GraphQLSchema, GraphQLString } from 'graphql';
+import { createHandler } from 'graphql-http/lib/use/express';
+import express from 'express';
+import { connectDB } from './lib/mongoose.ts';
 
-const server = Fastify({
-  logger: true
+const PORT = 4000;
+
+const schema = new GraphQLSchema({
+  query: new GraphQLObjectType({
+    name: 'Query',
+    fields: {
+      hello: { 
+        type: GraphQLString,
+        resolve: () => 'Hello world!'
+      },
+    },
+  }),
 });
 
-server.get('/', async (request, reply) => {
-  return { 'hello world' };
-});
+const app = express();
 
-server.listen({ port: 4000 }, (err, address) => {
-  if(err) {
-    console.log(err);
-    process.exit(1);
-  };
-  console.log("Running on address:", address);
-});
+app.all(
+  '/graphql',
+  createHandler({
+    schema: schema,
+  }),
+);
 
+app.listen(PORT, async function() {
+  await connectDB()
+  console.log("Listening on port:", PORT);
+})
